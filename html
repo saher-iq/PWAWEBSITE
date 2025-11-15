@@ -104,8 +104,8 @@
   <h2>📋 Daily Task List</h2>
 
   <div class="todo-input">
-    <input type="text" id="new-task" placeholder="Add a new task...">
-    <input type="datetime-local" id="task-time">
+    <input type="text" id="new-task" placeholder="Add a new task..." />
+    <input type="datetime-local" id="task-time" />
     <button onclick="addTask()">➕ Add</button>
   </div>
 
@@ -113,18 +113,12 @@
 </div>
 
 <script>
-// Load tasks
+// Load tasks from localStorage
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let lastSummaryDate = localStorage.getItem("lastSummaryDate") || "";
 
-// Ask for permissions
+// Render tasks on page load
 document.addEventListener("DOMContentLoaded", () => {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
   renderTasks();
-  startTaskReminderChecker();
-  startDailySummaryChecker();
 });
 
 /* -------------------------
@@ -193,8 +187,7 @@ function addTask() {
   tasks.push({
     text,
     time,
-    done: false,
-    notified: false
+    done: false
   });
 
   saveTasks();
@@ -208,71 +201,6 @@ function addTask() {
 document.getElementById("new-task").addEventListener("keyup", (e) => {
   if (e.key === "Enter") addTask();
 });
-
-/* -------------------------
-   INDIVIDUAL TASK REMINDER
---------------------------- */
-function startTaskReminderChecker() {
-  setInterval(() => {
-    const now = Date.now();
-
-    tasks.forEach((task, index) => {
-      const taskTime = new Date(task.time).getTime();
-
-      if (!task.notified && now >= taskTime) {
-        showNotification("🔔 Task Reminder", task.text);
-        tasks[index].notified = true;
-        saveTasks();
-      }
-    });
-
-  }, 5000);
-}
-
-function showNotification(title, body) {
-  if (Notification.permission === "granted") {
-    new Notification(title, {
-      body: body,
-      icon: "https://cdn-icons-png.flaticon.com/512/992/992700.png"
-    });
-  }
-}
-
-/* -------------------------
-       DAILY SUMMARY
---------------------------- */
-function startDailySummaryChecker() {
-  setInterval(() => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const today = now.toISOString().split("T")[0];
-
-    if (hours === 23 && minutes === 59 && lastSummaryDate !== today) {
-      sendDailySummary();
-      lastSummaryDate = today;
-      localStorage.setItem("lastSummaryDate", today);
-    }
-
-  }, 30000);
-}
-
-function sendDailySummary() {
-  const completed = tasks.filter(t => t.done).map(t => "✔️ " + t.text);
-  const pending = tasks.filter(t => !t.done).map(t => "❌ " + t.text);
-
-  let message = "";
-
-  if (tasks.length === 0) {
-    message = "No tasks were added today.";
-  } else {
-    message =
-      "Completed:\n" + (completed.length ? completed.join("\n") : "None") +
-      "\n\nPending:\n" + (pending.length ? pending.join("\n") : "None");
-  }
-
-  showNotification("📅 Daily Summary", message);
-}
 </script>
 </body>
 </html>
