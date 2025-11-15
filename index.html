@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Daily Task List</title>
+
+<style>
+.todo-container {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #eef2f6, #d7e0ea);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.todo-container h2 {
+  text-align: center;
+  color: #222;
+  margin-bottom: 20px;
+}
+
+.todo-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.todo-input input[type="text"],
+.todo-input input[type="datetime-local"] {
+  padding: 10px;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.todo-input button {
+  padding: 10px;
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: 0.2s;
+}
+
+.todo-input button:hover {
+  background-color: #005fa3;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+}
+
+.todo-list li {
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+
+.task-time {
+  font-size: 12px;
+  color: #777;
+}
+
+.todo-list button {
+  background: none;
+  border: none;
+  color: #d00;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.todo-list button:hover {
+  color: #a00;
+}
+</style>
+</head>
+
+<body>
+<div class="todo-container">
+  <h2>📋 Daily Task List</h2>
+
+  <div class="todo-input">
+    <input type="text" id="new-task" placeholder="Add a new task..." />
+    <input type="datetime-local" id="task-time" />
+    <button onclick="addTask()">➕ Add</button>
+  </div>
+
+  <ul class="todo-list" id="todo-list"></ul>
+</div>
+
+<script>
+// Load tasks from localStorage
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+// Render tasks on page load
+document.addEventListener("DOMContentLoaded", () => {
+  renderTasks();
+});
+
+/* -------------------------
+      SAVE / RENDER
+--------------------------- */
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function renderTasks() {
+  const list = document.getElementById("todo-list");
+  list.innerHTML = "";
+
+  tasks.forEach((task, index) => {
+    const li = document.createElement("li");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.done;
+    checkbox.onchange = () => {
+      tasks[index].done = checkbox.checked;
+      saveTasks();
+      renderTasks();
+    };
+
+    const info = document.createElement("div");
+    info.className = "task-info";
+
+    const label = document.createElement("label");
+    label.textContent = task.text;
+
+    const time = document.createElement("span");
+    time.className = "task-time";
+    time.textContent = "🕒 " + new Date(task.time).toLocaleString();
+
+    info.appendChild(label);
+    info.appendChild(time);
+
+    const del = document.createElement("button");
+    del.innerHTML = "🗑️";
+    del.onclick = () => {
+      tasks.splice(index, 1);
+      saveTasks();
+      renderTasks();
+    };
+
+    li.appendChild(checkbox);
+    li.appendChild(info);
+    li.appendChild(del);
+    list.appendChild(li);
+  });
+}
+
+/* -------------------------
+          ADD TASK
+--------------------------- */
+function addTask() {
+  const text = document.getElementById("new-task").value.trim();
+  const time = document.getElementById("task-time").value;
+
+  if (!text || !time) {
+    alert("Please enter task text AND choose a time.");
+    return;
+  }
+
+  tasks.push({
+    text,
+    time,
+    done: false
+  });
+
+  saveTasks();
+  renderTasks();
+
+  document.getElementById("new-task").value = "";
+  document.getElementById("task-time").value = "";
+}
+
+// Enter key adds task
+document.getElementById("new-task").addEventListener("keyup", (e) => {
+  if (e.key === "Enter") addTask();
+});
+</script>
+</body>
+</html>
