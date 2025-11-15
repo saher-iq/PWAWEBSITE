@@ -102,7 +102,49 @@
 }
 </style>
 </head>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/PWAWEBSITE/service-worker.js");
+}
+</script>
 
+<script src="/PWAWEBSITE/install-prompt.js"></script>
+
+<!-- ANDROID / DESKTOP INSTALL POPUP -->
+<div id="a2hs-popup" style="
+  display:none; position:fixed; bottom:20px; left:20px; right:20px;
+  padding:15px; background:white; border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2); font-family:sans-serif;">
+  <b>Add this app to your home screen</b><br>
+  <button onclick="installApp()" style="
+    margin-top:10px; padding:10px; width:100%; background:#0078d4;
+    color:white; border:none; border-radius:8px; font-size:16px;">
+    Add to Home Screen
+  </button>
+  <button onclick="closePopup('a2hs-popup')" style="
+    margin-top:10px; padding:10px; width:100%; background:#ccc;
+    border:none; border-radius:8px; font-size:16px;">
+    Close
+  </button>
+</div>
+
+<!-- IOS INSTALL INSTRUCTIONS -->
+<div id="ios-popup" style="
+  display:none; position:fixed; bottom:20px; left:20px; right:20px;
+  padding:15px; background:white; border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2); font-family:sans-serif;">
+  <b>Install this app:</b><br><br>
+  Tap the <span style="font-size:20px;">⬆️</span> share button<br>
+  then choose <b>“Add to Home Screen”</b>.
+  <br><br>
+  <button onclick="closePopup('ios-popup')" style="
+    padding:10px; width:100%; background:#ccc;
+    border:none; border-radius:8px; font-size:16px;">
+    Close
+  </button>
+</div>
+
+  
 <body>
 <div class="todo-container">
   <h2>📋 Daily Task List</h2>
