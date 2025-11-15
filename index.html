@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <link rel="manifest" href="/PWAWEBSITE/manifest.json">
-  <meta name="theme-color" content="#0078d4">
-  <link rel="apple-touch-icon" href="/PWAWEBSITE/icons/icon-192.png">
+<html lang="en">
 
+<head>
 <meta charset="UTF-8">
 <title>Daily Task List</title>
+
+<!-- PWA REQUIRED FILES -->
+<link rel="manifest" href="/PWAWEBSITE/manifest.json">
+<meta name="theme-color" content="#0078d4">
+<link rel="apple-touch-icon" href="/PWAWEBSITE/icons/icon-192.png">
 
 <style>
 .todo-container {
@@ -100,76 +102,81 @@
 .todo-list button:hover {
   color: #a00;
 }
+
+/* ---- INSTALL POPUP STYLES ---- */
+
+.install-popup {
+  display:none;
+  position:fixed;
+  bottom:20px;
+  left:20px;
+  right:20px;
+  padding:15px;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+  font-family:sans-serif;
+  z-index:9999;
+}
+.install-popup button {
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+}
 </style>
 </head>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/PWAWEBSITE/service-worker.js");
-}
-</script>
 
-<script src="/PWAWEBSITE/install-prompt.js"></script>
-
-<!-- ANDROID / DESKTOP INSTALL POPUP -->
-<div id="a2hs-popup" style="
-  display:none; position:fixed; bottom:20px; left:20px; right:20px;
-  padding:15px; background:white; border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.2); font-family:sans-serif;">
-  <b>Add this app to your home screen</b><br>
-  <button onclick="installApp()" style="
-    margin-top:10px; padding:10px; width:100%; background:#0078d4;
-    color:white; border:none; border-radius:8px; font-size:16px;">
-    Add to Home Screen
-  </button>
-  <button onclick="closePopup('a2hs-popup')" style="
-    margin-top:10px; padding:10px; width:100%; background:#ccc;
-    border:none; border-radius:8px; font-size:16px;">
-    Close
-  </button>
-</div>
-
-<!-- IOS INSTALL INSTRUCTIONS -->
-<div id="ios-popup" style="
-  display:none; position:fixed; bottom:20px; left:20px; right:20px;
-  padding:15px; background:white; border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.2); font-family:sans-serif;">
-  <b>Install this app:</b><br><br>
-  Tap the <span style="font-size:20px;">⬆️</span> share button<br>
-  then choose <b>“Add to Home Screen”</b>.
-  <br><br>
-  <button onclick="closePopup('ios-popup')" style="
-    padding:10px; width:100%; background:#ccc;
-    border:none; border-radius:8px; font-size:16px;">
-    Close
-  </button>
-</div>
-
-  
 <body>
 <div class="todo-container">
   <h2>📋 Daily Task List</h2>
 
   <div class="todo-input">
-    <input type="text" id="new-task" placeholder="Add a new task..." />
-    <input type="datetime-local" id="task-time" />
+    <input type="text" id="new-task" placeholder="Add a new task...">
+    <input type="datetime-local" id="task-time">
     <button onclick="addTask()">➕ Add</button>
   </div>
 
   <ul class="todo-list" id="todo-list"></ul>
 </div>
 
-<script>
-// Load tasks from localStorage
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+<!-- ANDROID / DESKTOP INSTALL POPUP -->
+<div id="a2hs-popup" class="install-popup">
+  <b>Add this app to your home screen</b><br>
+  <button onclick="installApp()" style="background:#0078d4; color:white;">Add to Home Screen</button>
+  <button onclick="closePopup('a2hs-popup')" style="background:#ccc;">Close</button>
+</div>
 
-// Render tasks on page load
+<!-- IOS INSTALL INSTRUCTIONS -->
+<div id="ios-popup" class="install-popup">
+  <b>Install this app:</b><br><br>
+  Tap the <span style="font-size:20px;">⬆️</span> share button<br>
+  then choose <b>“Add to Home Screen”</b>.
+  <br><br>
+  <button onclick="closePopup('ios-popup')" style="background:#ccc;">Close</button>
+</div>
+
+<script>
+/* ==========================
+      LOAD TASKS
+========================== */
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let lastSummaryDate = localStorage.getItem("lastSummaryDate") || "";
+
 document.addEventListener("DOMContentLoaded", () => {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
   renderTasks();
+  startTaskReminderChecker();
+  startDailySummaryChecker();
 });
 
-/* -------------------------
-      SAVE / RENDER
---------------------------- */
+/* ==========================
+  SAVE / RENDER TASKS
+========================== */
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
@@ -218,9 +225,9 @@ function renderTasks() {
   });
 }
 
-/* -------------------------
-          ADD TASK
---------------------------- */
+/* ==========================
+       ADD TASK
+========================== */
 function addTask() {
   const text = document.getElementById("new-task").value.trim();
   const time = document.getElementById("task-time").value;
@@ -233,7 +240,8 @@ function addTask() {
   tasks.push({
     text,
     time,
-    done: false
+    done: false,
+    notified: false
   });
 
   saveTasks();
@@ -243,10 +251,89 @@ function addTask() {
   document.getElementById("task-time").value = "";
 }
 
-// Enter key adds task
 document.getElementById("new-task").addEventListener("keyup", (e) => {
   if (e.key === "Enter") addTask();
 });
+
+/* ==========================
+   INDIVIDUAL TASK REMINDER
+========================== */
+function startTaskReminderChecker() {
+  setInterval(() => {
+    const now = Date.now();
+
+    tasks.forEach((task, index) => {
+      const taskTime = new Date(task.time).getTime();
+
+      if (!task.notified && now >= taskTime) {
+        showNotification("🔔 Task Reminder", task.text);
+        tasks[index].notified = true;
+        saveTasks();
+      }
+    });
+
+  }, 5000);
+}
+
+function showNotification(title, body) {
+  if (Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: "/PWAWEBSITE/icons/icon-192.png"
+    });
+  }
+}
+
+/* ==========================
+        DAILY SUMMARY
+========================== */
+function startDailySummaryChecker() {
+  setInterval(() => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const today = now.toISOString().split("T")[0];
+
+    if (hours === 23 && minutes === 59 && lastSummaryDate !== today) {
+      sendDailySummary();
+      lastSummaryDate = today;
+      localStorage.setItem("lastSummaryDate", today);
+    }
+
+  }, 30000);
+}
+
+function sendDailySummary() {
+  const completed = tasks.filter(t => t.done).map(t => "✔️ " + t.text);
+  const pending = tasks.filter(t => !t.done).map(t => "❌ " + t.text);
+
+  let message = "";
+
+  if (tasks.length === 0) {
+    message = "No tasks were added today.";
+  } else {
+    message =
+      "Completed:\n" + (completed.length ? completed.join("\n") : "None") +
+      "\n\nPending:\n" + (pending.length ? pending.join("\n") : "None");
+  }
+
+  showNotification("📅 Daily Summary", message);
+}
 </script>
+
+<!-- ==========================
+     INSTALL PROMPT SCRIPT
+========================== -->
+<script src="/PWAWEBSITE/install-prompt.js"></script>
+
+<!-- ==========================
+     SERVICE WORKER REGISTER
+========================== -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/PWAWEBSITE/service-worker.js");
+}
+</script>
+
 </body>
 </html>
