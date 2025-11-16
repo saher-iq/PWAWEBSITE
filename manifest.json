@@ -1,0 +1,21 @@
+{
+  "name": "Daily Task List",
+  "short_name": "Tasks",
+  "description": "Daily Task List with reminders and offline support",
+  "start_url": "/PWAWEBSITE/index.html",
+  "display": "standalone",
+  "background_color": "#0078d4",
+  "theme_color": "#0078d4",
+  "icons": [
+    {
+      "src": "/PWAWEBSITE/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/PWAWEBSITE/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
