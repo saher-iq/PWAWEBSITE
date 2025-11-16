@@ -1,13 +1,14 @@
-const CACHE_NAME = "task-pwa-cache-v1";
+const CACHE_NAME = "tasklist-cache-v1";
 const urlsToCache = [
-  "/PWAWEBSITE/index.html",
-  "/PWAWEBSITE/manifest.json",
-  "/PWAWEBSITE/icons/icon-192.png",
-  "/PWAWEBSITE/icons/icon-512.png",
-  "/PWAWEBSITE/style.css" // إذا لديك ملف CSS خارجي
+  "./index.html",
+  "./main/manifest.json",
+  "./main/install-prompt.js",
+  "./main/icons/icon-192.png",
+  "./main/icons/icon-512.png",
+  "./main/style.css" // لو استعملت ملف CSS خارجي
 ];
 
-// Install SW and cache resources
+// Install SW
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,7 +16,18 @@ self.addEventListener("install", event => {
   );
 });
 
-// Serve cached content
+// Activate SW
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
+    )
+  );
+});
+
+// Fetch
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request)
