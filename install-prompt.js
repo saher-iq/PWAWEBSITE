@@ -1,41 +1,56 @@
 let deferredPrompt;
 
-const isInstalled =
-  window.matchMedia("(display-mode: standalone)").matches ||
-  navigator.standalone === true ||
-  localStorage.getItem("appInstalled") === "yes";
-
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isAndroid = /android/i.test(navigator.userAgent);
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  if (isInstalled) return;
-
-  e.preventDefault();
+// Detect Android/Desktop install availability
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // Prevent default mini-banner
   deferredPrompt = e;
-  document.getElementById("a2hs-popup").style.display = "block";
-});
 
-function installApp() {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then((choice) => {
-    if (choice.outcome === "accepted") {
-      localStorage.setItem("appInstalled", "yes");
-    }
-    document.getElementById("a2hs-popup").style.display = "none";
-  });
-}
-
-window.addEventListener("load", () => {
-  if (isInstalled) return;
-
-  if (isIOS) {
-    document.getElementById("ios-popup").style.display = "block";
+  // Only show popup if not already installed
+  if (!isAppInstalled()) {
+    document.getElementById('a2hs-popup').style.display = 'block';
   }
 });
 
-function closePopup(id) {
-  document.getElementById(id).style.display = "none";
+// Function to install app
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('App installed');
+      }
+      deferredPrompt = null;
+    });
+  }
+  document.getElementById('a2hs-popup').style.display = 'none';
 }
+
+// Close popup manually
+function closePopup(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// Detect if app is installed (Android/Desktop)
+function isAppInstalled() {
+  return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
+}
+
+// iOS popup
+function showiOSPopup() {
+  const ua = window.navigator.userAgent;
+  const isiOS = /iphone|ipad|ipod/i.test(ua);
+  if (isiOS && !isAppInstalled()) {
+    document.getElementById('ios-popup').style.display = 'block';
+  }
+}
+
+// Run on load
+window.addEventListener('load', () => {
+  if (!isAppInstalled()) {
+    showiOSPopup();
+  } else {
+    // Hide all popups if app already installed
+    document.getElementById('a2hs-popup').style.display = 'none';
+    document.getElementById('ios-popup').style.display = 'none';
+  }
+});
