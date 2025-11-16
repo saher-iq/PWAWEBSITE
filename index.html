@@ -6,11 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="main/manifest.json">
 <meta name="theme-color" content="#0078d4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="main/icons/icon-192.png">
 
 <style>
 /* --- Styles for the app --- */
@@ -159,7 +159,8 @@ body {
   <button onclick="closePopup('ios-popup')">Close</button>
 </div>
 
-<script src="install-prompt.js"></script>
+<!-- Scripts -->
+<script src="main/install-prompt.js"></script>
 
 <script>
 // --- Tasks JS ---
@@ -167,58 +168,37 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let lastSummaryDate = localStorage.getItem("lastSummaryDate") || "";
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
+  if (Notification.permission !== "granted") Notification.requestPermission();
   renderTasks();
   startTaskReminderChecker();
   startDailySummaryChecker();
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('main/service-worker.js')
+      .then(() => console.log('Service Worker Registered'))
+      .catch(err => console.error('SW registration failed:', err));
+  }
 });
 
-function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+function saveTasks() { localStorage.setItem("tasks", JSON.stringify(tasks)); }
 
 function renderTasks() {
   const list = document.getElementById("todo-list");
   list.innerHTML = "";
-
   tasks.forEach((task, index) => {
     const li = document.createElement("li");
-
     const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = task.done;
-    checkbox.onchange = () => {
-      tasks[index].done = checkbox.checked;
-      saveTasks();
-      renderTasks();
-    };
-
-    const info = document.createElement("div");
-    info.className = "task-info";
-
-    const label = document.createElement("label");
-    label.textContent = task.text;
-
-    const time = document.createElement("span");
-    time.className = "task-time";
+    checkbox.type = "checkbox"; checkbox.checked = task.done;
+    checkbox.onchange = () => { tasks[index].done = checkbox.checked; saveTasks(); renderTasks(); };
+    const info = document.createElement("div"); info.className = "task-info";
+    const label = document.createElement("label"); label.textContent = task.text;
+    const time = document.createElement("span"); time.className = "task-time";
     time.textContent = "🕒 " + new Date(task.time).toLocaleString();
-
-    info.appendChild(label);
-    info.appendChild(time);
-
-    const del = document.createElement("button");
-    del.innerHTML = "🗑️";
-    del.onclick = () => {
-      tasks.splice(index, 1);
-      saveTasks();
-      renderTasks();
-    };
-
-    li.appendChild(checkbox);
-    li.appendChild(info);
-    li.appendChild(del);
+    info.appendChild(label); info.appendChild(time);
+    const del = document.createElement("button"); del.innerHTML = "🗑️";
+    del.onclick = () => { tasks.splice(index, 1); saveTasks(); renderTasks(); };
+    li.appendChild(checkbox); li.appendChild(info); li.appendChild(del);
     list.appendChild(li);
   });
 }
@@ -226,24 +206,15 @@ function renderTasks() {
 function addTask() {
   const text = document.getElementById("new-task").value.trim();
   const time = document.getElementById("task-time").value;
-
-  if (!text || !time) {
-    alert("Please enter task text AND choose a time.");
-    return;
-  }
-
+  if (!text || !time) { alert("Please enter task text AND choose a time."); return; }
   tasks.push({ text, time, done: false, notified: false });
-  saveTasks();
-  renderTasks();
+  saveTasks(); renderTasks();
   document.getElementById("new-task").value = "";
   document.getElementById("task-time").value = "";
 }
 
-document.getElementById("new-task").addEventListener("keyup", (e) => {
-  if (e.key === "Enter") addTask();
-});
+document.getElementById("new-task").addEventListener("keyup", (e) => { if (e.key === "Enter") addTask(); });
 
-// Individual Task Reminder
 function startTaskReminderChecker() {
   setInterval(() => {
     const now = Date.now();
@@ -264,17 +235,13 @@ function showNotification(title, body) {
   }
 }
 
-// Daily Summary
 function startDailySummaryChecker() {
   setInterval(() => {
     const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const hours = now.getHours(); const minutes = now.getMinutes();
     const today = now.toISOString().split("T")[0];
-
     if (hours === 23 && minutes === 59 && lastSummaryDate !== today) {
-      sendDailySummary();
-      lastSummaryDate = today;
+      sendDailySummary(); lastSummaryDate = today;
       localStorage.setItem("lastSummaryDate", today);
     }
   }, 30000);
@@ -283,13 +250,11 @@ function startDailySummaryChecker() {
 function sendDailySummary() {
   const completed = tasks.filter(t => t.done).map(t => "✔️ " + t.text);
   const pending = tasks.filter(t => !t.done).map(t => "❌ " + t.text);
-  let message = "";
-  if (tasks.length === 0) message = "No tasks were added today.";
-  else message = "Completed:\n" + (completed.length ? completed.join("\n") : "None") +
-                 "\n\nPending:\n" + (pending.length ? pending.join("\n") : "None");
+  let message = tasks.length === 0 ? "No tasks were added today." :
+    "Completed:\n" + (completed.length ? completed.join("\n") : "None") +
+    "\n\nPending:\n" + (pending.length ? pending.join("\n") : "None");
   showNotification("📅 Daily Summary", message);
 }
 </script>
-
 </body>
 </html>
