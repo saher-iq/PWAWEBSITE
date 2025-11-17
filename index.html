@@ -144,6 +144,11 @@ body {
   </div>
 
   <ul class="todo-list" id="todo-list"></ul>
+
+  <!-- Button to manage push subscription -->
+  <div style="margin-top:12px; text-align:center;">
+    <button id="subscribe-btn">Enable Background Notifications</button>
+  </div>
 </div>
 
 <!-- Android/Desktop Install Popup -->
@@ -166,6 +171,51 @@ body {
 // --- Tasks JS ---
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let lastSummaryDate = localStorage.getItem("lastSummaryDate") || "";
+
+const SUBSCRIBE_BTN = document.getElementById('subscribe-btn');
+let VAPID_PUBLIC_KEY = ''; // will be fetched from server
+
+async function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function registerServiceWorkerAndSubscribe() {
+  if (!('serviceWorker' in navigator)) return alert('Service workers not supported.');
+  try {
+    const reg = await navigator.serviceWorker.register('./service-worker.js');
+    console.log('SW registered', reg);
+
+    // get VAPID public key from server
+    if (!VAPID_PUBLIC_KEY) {
+      const resp = await fetch('/vapidPublicKey');
+      if (resp.ok) VAPID_PUBLIC_KEY = await resp.text();
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return alert('Notification permission denied.');
+
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    await fetch('/save-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription)
+    });
+
+    alert('Subscribed to push notifications.');
+  } catch (err) {
+    console.error('Error during SW register/subscribe', err);
+    alert('Could not subscribe: ' + err);
+  }
+}
+
+SUBSCRIBE_BTN.addEventListener('click', registerServiceWorkerAndSubscribe);
 
 document.addEventListener("DOMContentLoaded", () => {
   if (Notification.permission !== "granted") Notification.requestPermission();
@@ -203,7 +253,7 @@ function renderTasks() {
   });
 }
 
-function addTask() {
+async function addTask() {
   const text = document.getElementById("new-task").value.trim();
   const time = document.getElementById("task-time").value;
   if (!text || !time) { alert("Please enter task text AND choose a time."); return; }
@@ -211,6 +261,17 @@ function addTask() {
   saveTasks(); renderTasks();
   document.getElementById("new-task").value = "";
   document.getElementById("task-time").value = "";
+
+  // Send schedule request to server so push notifications can be scheduled
+  try {
+    await fetch('/schedule-task-reminders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, timeISO: time })
+    });
+  } catch (e) {
+    console.warn('Could not schedule reminders on server:', e);
+  }
 }
 
 document.getElementById("new-task").addEventListener("keyup", (e) => { if (e.key === "Enter") addTask(); });
