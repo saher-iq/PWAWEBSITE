@@ -1,24 +1,31 @@
-// Service Worker — handle cache (as before) and push events for background notifications
+// service-worker.js
+const CACHE_VERSION = 'v1';
+const CACHE_NAME = `tasklist-cache-${CACHE_VERSION}`;
 
-const CACHE_NAME = "tasklist-cache-v1";
-const urlsToCache = [
-  "./index.html",
-  "./manifest.json",
-  "./install-prompt.js",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./style.css"
+// Adjust base path for GitHub Pages repo: '/username/repo-name'
+// If serving at root (username.github.io), set BASE = '/'
+const BASE = self.registration.scope.endsWith('/') ? self.registration.scope : '/';
+
+const URLS_TO_CACHE = [
+  `${BASE}`,
+  `${BASE}index.html`,
+  `${BASE}manifest.json`,
+  `${BASE}style.css`,
+  `${BASE}main.js`,
+  `${BASE}install-prompt.js`,
+  `${BASE}icons/icon-192.png`,
+  `${BASE}icons/icon-512.png`,
 ];
 
-self.addEventListener("install", event => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => cache.addAll(URLS_TO_CACHE))
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener("activate", event => {
+self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(key => {
@@ -28,41 +35,43 @@ self.addEventListener("activate", event => {
   );
 });
 
-self.addEventListener("fetch", event => {
+// Network-first for navigation; cache-first for assets
+self.addEventListener('fetch', event => {
+  const req = event.request;
+
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(`${BASE}index.html`))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request).catch(() => caches.match('./index.html')))
+    caches.match(req).then(res => res || fetch(req))
   );
 });
 
-// Handle push events sent from your server (this runs even if page is closed)
-self.addEventListener('push', event => {
-  let data = { title: 'Reminder', body: 'You have a reminder', url: './index.html' };
-  try {
-    if (event.data) data = event.data.json();
-  } catch (e) { console.warn('push event data not json', e); }
-
-  const options = {
-    body: data.body,
-    icon: './icons/icon-192.png',
-    badge: './icons/icon-192.png',
-    data: { url: data.url } // optional: used when notification clicked
-  };
-
-  event.waitUntil(self.registration.showNotification(data.title, options));
+// Listen for messages to show notifications
+self.addEventListener('message', event => {
+  const { type, title, body } = event.data || {};
+  if (type === 'notify') {
+    self.registration.showNotification(title || 'Reminder', {
+      body: body || 'You have a reminder',
+      icon: `${BASE}icons/icon-192.png`,
+      badge: `${BASE}icons/icon-192.png`,
+    });
+  }
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const urlToOpen = event.notification.data && event.notification.data.url ? event.notification.data.url : './index.html';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
       for (let client of windowClients) {
-        if (client.url === urlToOpen || client.url.endsWith('/')) {
-          return client.focus();
-        }
+        // Focus first matching client
+        return client.focus();
       }
-      return clients.openWindow(urlToOpen);
+      return clients.openWindow(`${BASE}index.html`);
     })
   );
 });
