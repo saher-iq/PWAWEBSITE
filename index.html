@@ -1,322 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Daily Task List</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Task List</title>
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0078d4">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0078d4" />
 
-<style>
-/* --- Styles for the app --- */
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #eef2f6;
-  margin: 0;
-  padding: 0;
-}
+  <!-- iOS PWA meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-.todo-container {
-  max-width: 500px;
-  margin: 30px auto;
-  padding: 20px;
-  background: linear-gradient(135deg, #eef2f6, #d7e0ea);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.todo-container h2 {
-  text-align: center;
-  color: #222;
-  margin-bottom: 20px;
-}
-
-.todo-input {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.todo-input input[type="text"],
-.todo-input input[type="datetime-local"] {
-  padding: 10px;
-  border: 1px solid #bbb;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-.todo-input button {
-  padding: 10px;
-  background-color: #0078d4;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 18px;
-  transition: 0.2s;
-}
-
-.todo-input button:hover {
-  background-color: #005fa3;
-}
-
-.todo-list {
-  list-style: none;
-  padding: 0;
-}
-
-.todo-list li {
-  background: #fff;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  animation: fadeIn 0.3s ease;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.task-info {
-  display: flex;
-  flex-direction: column;
-  margin-left: 10px;
-}
-
-.task-time {
-  font-size: 12px;
-  color: #777;
-}
-
-.todo-list button {
-  background: none;
-  border: none;
-  color: #d00;
-  font-size: 20px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.todo-list button:hover {
-  color: #a00;
-}
-
-/* Popups */
-#a2hs-popup, #ios-popup {
-  display:none;
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  right:20px;
-  padding:15px;
-  background:#0078d4;
-  color:white;
-  border-radius:8px;
-  z-index:1000;
-  text-align:center;
-}
-#a2hs-popup button, #ios-popup button {
-  margin-left:10px;
-  padding:5px 10px;
-}
-</style>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <div class="todo-container">
+    <h2>Daily Task List</h2>
 
-<div class="todo-container">
-  <h2>📋 Daily Task List</h2>
+    <div class="todo-input">
+      <input id="task-text" type="text" placeholder="Task description" />
+      <input id="task-time" type="datetime-local" />
+      <button id="add-task">Add task</button>
+      <button id="enable-notifications">Enable notifications</button>
+    </div>
 
-  <div class="todo-input">
-    <input type="text" id="new-task" placeholder="Add a new task...">
-    <input type="datetime-local" id="task-time">
-    <button onclick="addTask()">➕ Add</button>
+    <ul id="task-list" class="todo-list"></ul>
   </div>
 
-  <ul class="todo-list" id="todo-list"></ul>
-
-  <!-- Button to manage push subscription -->
-  <div style="margin-top:12px; text-align:center;">
-    <button id="subscribe-btn">Enable Background Notifications</button>
+  <!-- Install prompt popups -->
+  <div id="a2hs-popup">
+    <span>Add this app to your home screen</span>
+    <button id="a2hs-accept">Install</button>
+    <button id="a2hs-dismiss">Dismiss</button>
   </div>
-</div>
 
-<!-- Android/Desktop Install Popup -->
-<div id="a2hs-popup">
-  Install this app on your device.
-  <button onclick="installApp()">Install</button>
-  <button onclick="closePopup('a2hs-popup')">Close</button>
-</div>
+  <div id="ios-popup">
+    <span>To install: tap Share, then “Add to Home Screen”.</span>
+    <button id="ios-dismiss">Got it</button>
+  </div>
 
-<!-- iOS Install Instructions Popup -->
-<div id="ios-popup">
-  To install this app on iOS, tap the Share icon and select "Add to Home Screen".
-  <button onclick="closePopup('ios-popup')">Close</button>
-</div>
-
-<!-- Scripts -->
-<script src="./install-prompt.js"></script>
-
-<script>
-// --- Tasks JS ---
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let lastSummaryDate = localStorage.getItem("lastSummaryDate") || "";
-
-const SUBSCRIBE_BTN = document.getElementById('subscribe-btn');
-let VAPID_PUBLIC_KEY = ''; // will be fetched from the server
-
-async function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
-}
-
-async function registerServiceWorkerAndSubscribe() {
-  if (!('serviceWorker' in navigator)) return alert('Service workers not supported.');
-  try {
-    const reg = await navigator.serviceWorker.register('./service-worker.js');
-    console.log('SW registered', reg);
-
-    // get VAPID public key from server
-    if (!VAPID_PUBLIC_KEY) {
-      const resp = await fetch('/vapidPublicKey');
-      if (resp.ok) VAPID_PUBLIC_KEY = await resp.text();
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return alert('Notification permission denied.');
-
-    const subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-
-    await fetch('/save-subscription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(subscription)
-    });
-
-    alert('Subscribed to push notifications.');
-  } catch (err) {
-    console.error('Error during SW register/subscribe', err);
-    alert('Could not subscribe: ' + err);
-  }
-}
-
-SUBSCRIBE_BTN.addEventListener('click', registerServiceWorkerAndSubscribe);
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (Notification.permission !== "granted") Notification.requestPermission();
-  renderTasks();
-  startTaskReminderChecker();
-  startDailySummaryChecker();
-
-  // Register Service Worker (correct path at repo root)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(() => console.log('Service Worker Registered'))
-      .catch(err => console.error('SW registration failed:', err));
-  }
-});
-
-function saveTasks() { localStorage.setItem("tasks", JSON.stringify(tasks)); }
-
-function renderTasks() {
-  const list = document.getElementById("todo-list");
-  list.innerHTML = "";
-  tasks.forEach((task, index) => {
-    const li = document.createElement("li");
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox"; checkbox.checked = task.done;
-    checkbox.onchange = () => { tasks[index].done = checkbox.checked; saveTasks(); renderTasks(); };
-    const info = document.createElement("div"); info.className = "task-info";
-    const label = document.createElement("label"); label.textContent = task.text;
-    const time = document.createElement("span"); time.className = "task-time";
-    time.textContent = "🕒 " + new Date(task.time).toLocaleString();
-    info.appendChild(label); info.appendChild(time);
-    const del = document.createElement("button"); del.innerHTML = "🗑️";
-    del.onclick = () => { tasks.splice(index, 1); saveTasks(); renderTasks(); };
-    li.appendChild(checkbox); li.appendChild(info); li.appendChild(del);
-    list.appendChild(li);
-  });
-}
-
-async function addTask() {
-  const text = document.getElementById("new-task").value.trim();
-  const time = document.getElementById("task-time").value;
-  if (!text || !time) { alert("Please enter task text AND choose a time."); return; }
-  tasks.push({ text, time, done: false, notified: false });
-  saveTasks(); renderTasks();
-  document.getElementById("new-task").value = "";
-  document.getElementById("task-time").value = "";
-
-  // Send schedule request to server so push notifications can be scheduled
-  try {
-    await fetch('/schedule-task-reminders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, timeISO: time })
-    });
-  } catch (e) {
-    console.warn('Could not schedule reminders on server:', e);
-  }
-}
-
-document.getElementById("new-task").addEventListener("keyup", (e) => { if (e.key === "Enter") addTask(); });
-
-function startTaskReminderChecker() {
-  setInterval(() => {
-    const now = Date.now();
-    tasks.forEach((task, index) => {
-      const taskTime = new Date(task.time).getTime();
-      if (!task.notified && now >= taskTime) {
-        showNotification("🔔 Task Reminder", task.text);
-        tasks[index].notified = true;
-        saveTasks();
-      }
-    });
-  }, 5000);
-}
-
-function showNotification(title, body) {
-  if (Notification.permission === "granted") {
-    new Notification(title, { body, icon: "https://cdn-icons-png.flaticon.com/512/992/992700.png" });
-  }
-}
-
-function startDailySummaryChecker() {
-  setInterval(() => {
-    const now = new Date();
-    const hours = now.getHours(); const minutes = now.getMinutes();
-    const today = now.toISOString().split("T")[0];
-    if (hours === 23 && minutes === 59 && lastSummaryDate !== today) {
-      sendDailySummary(); lastSummaryDate = today;
-      localStorage.setItem("lastSummaryDate", today);
-    }
-  }, 30000);
-}
-
-function sendDailySummary() {
-  const completed = tasks.filter(t => t.done).map(t => "✔️ " + t.text);
-  const pending = tasks.filter(t => !t.done).map(t => "❌ " + t.text);
-  let message = tasks.length === 0 ? "No tasks were added today." :
-    "Completed:\n" + (completed.length ? completed.join("\n") : "None") +
-    "\n\nPending:\n" + (pending.length ? pending.join("\n") : "None");
-  showNotification("📅 Daily Summary", message);
-}
-</script>
+  <script src="./install-prompt.js"></script>
+  <script src="./main.js"></script>
 </body>
 </html>
