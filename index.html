@@ -6,11 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="main/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0078d4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="main/icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 
 <style>
 /* --- Styles for the app --- */
@@ -160,7 +160,7 @@ body {
 </div>
 
 <!-- Scripts -->
-<script src="main/install-prompt.js"></script>
+<script src="./install-prompt.js"></script>
 
 <script>
 // --- Tasks JS ---
@@ -173,9 +173,9 @@ document.addEventListener("DOMContentLoaded", () => {
   startTaskReminderChecker();
   startDailySummaryChecker();
 
-  // Register Service Worker
+  // Register Service Worker (correct path at repo root)
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('main/service-worker.js')
+    navigator.serviceWorker.register('./service-worker.js')
       .then(() => console.log('Service Worker Registered'))
       .catch(err => console.error('SW registration failed:', err));
   }
