@@ -1,40 +1,44 @@
+// install-prompt.js
 let deferredPrompt;
+const a2hsPopup = document.getElementById('a2hs-popup');
+const a2hsAccept = document.getElementById('a2hs-accept');
+const a2hsDismiss = document.getElementById('a2hs-dismiss');
 
-// Detect iOS
-const isIos = () => {
-  const userAgent = window.navigator.userAgent.toLowerCase();
-  return /iphone|ipad|ipod/.test(userAgent);
-};
+const iosPopup = document.getElementById('ios-popup');
+const iosDismiss = document.getElementById('ios-dismiss');
 
-// Detect if app is already installed
-const isInStandaloneMode = () => ('standalone' in window.navigator) && window.navigator.standalone;
-
-// Show popup for Android/Desktop
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  if (!isInStandaloneMode()) {
-    document.getElementById('a2hs-popup').style.display = 'block';
-  }
+  showA2HS();
 });
 
-function installApp() {
-  document.getElementById('a2hs-popup').style.display = 'none';
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choiceResult => {
-      deferredPrompt = null;
-    });
-  }
+function showA2HS() {
+  if (!deferredPrompt) return;
+  a2hsPopup.classList.add('show');
 }
 
-// Show popup for iOS
+a2hsAccept?.addEventListener('click', async () => {
+  a2hsPopup.classList.remove('show');
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt = null;
+});
+
+a2hsDismiss?.addEventListener('click', () => {
+  a2hsPopup.classList.remove('show');
+});
+
+// Simple iOS detection (Safari iOS lacks beforeinstallprompt)
+const isIOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
 window.addEventListener('load', () => {
-  if (isIos() && !isInStandaloneMode()) {
-    document.getElementById('ios-popup').style.display = 'block';
+  if (isIOS() && !isStandalone()) {
+    iosPopup.classList.add('show');
   }
 });
 
-function closePopup(id) {
-  document.getElementById(id).style.display = 'none';
-}
+iosDismiss?.addEventListener('click', () => {
+  iosPopup.classList.remove('show');
+});
