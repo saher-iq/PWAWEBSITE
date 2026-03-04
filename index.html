@@ -17,6 +17,30 @@
     })(window, document, "clarity", "script", "vq8gbda3hd");
 </script>
   <script src="https://t.contentsquare.net/uxa/b0bc6ce12137e.js"></script>
+  <!-- Mixpanel -->
+<script type="text/javascript">
+(function(f,b){
+if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];
+b.init=function(e,f,c){function g(a,d){var b=d.split(".");
+2==b.length&&(a=a[b[0]],d=b[1]);
+a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;
+"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";
+a.people=a.people||[];
+i="track track_pageview".split(" ");
+for(h=0;h<i.length;h++)g(a,i[h]);
+b._i.push([e,f,c])};
+b.__SV=1.2;
+e=f.createElement("script");
+e.type="text/javascript";
+e.async=!0;
+e.src="https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";
+g=f.getElementsByTagName("script")[0];
+g.parentNode.insertBefore(e,g)
+}})(document,window.mixpanel||[]);
+
+mixpanel.init("d6242911a1a51953d96fcacbb06d560f");
+mixpanel.track("Page Loaded");
+</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Daily Task List</title>
