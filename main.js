@@ -18,6 +18,9 @@ function init() {
     tasks = [];
   }
 
+  // Re-schedule reminders for saved tasks after page reload
+  tasks.forEach((task) => scheduleReminders(task));
+
   if (listEl) render();
 
   if ('serviceWorker' in navigator) {
@@ -33,8 +36,6 @@ function init() {
   if (enableNotifBtn) {
     enableNotifBtn.addEventListener('click', requestNotificationPermission);
   }
-
-  initStopwatch();
 }
 
 function requestNotificationPermission() {
@@ -170,90 +171,4 @@ function showReminder(task, label) {
   } else {
     alert(`${label}: ${task.text}`);
   }
-}
-
-function initStopwatch() {
-  const stopwatchDisplay = document.getElementById('stopwatch-display');
-  const startStopwatchBtn = document.getElementById('start-stopwatch');
-  const lapStopwatchBtn = document.getElementById('lap-stopwatch');
-  const resetStopwatchBtn = document.getElementById('reset-stopwatch');
-  const lapListEl = document.getElementById('lap-list');
-
-  if (!stopwatchDisplay || !startStopwatchBtn || !lapStopwatchBtn || !resetStopwatchBtn || !lapListEl) {
-    return;
-  }
-
-  let startTime = 0;
-  let elapsed = 0;
-  let intervalId = null;
-  let lapCount = 0;
-
-  function formatTime(ms) {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    const hundredths = Math.floor((ms % 1000) / 10);
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
-  }
-
-  function updateDisplay() {
-    stopwatchDisplay.textContent = formatTime(elapsed);
-  }
-
-  function startStopwatch() {
-    if (intervalId) return;
-
-    startTime = Date.now() - elapsed;
-    intervalId = setInterval(() => {
-      elapsed = Date.now() - startTime;
-      updateDisplay();
-    }, 10);
-
-    startStopwatchBtn.textContent = 'Stop';
-    lapStopwatchBtn.disabled = false;
-  }
-
-  function stopStopwatch() {
-    clearInterval(intervalId);
-    intervalId = null;
-    startStopwatchBtn.textContent = 'Start';
-    lapStopwatchBtn.disabled = true;
-  }
-
-  function resetStopwatch() {
-    stopStopwatch();
-    elapsed = 0;
-    lapCount = 0;
-    lapListEl.innerHTML = '';
-    updateDisplay();
-  }
-
-  function addLap() {
-    if (!intervalId) return;
-
-    lapCount += 1;
-    const li = document.createElement('li');
-
-    const label = document.createElement('span');
-    label.textContent = `Lap ${lapCount}`;
-
-    const value = document.createElement('span');
-    value.textContent = formatTime(elapsed);
-
-    li.appendChild(label);
-    li.appendChild(value);
-    lapListEl.prepend(li);
-  }
-
-  startStopwatchBtn.addEventListener('click', () => {
-    if (intervalId) {
-      stopStopwatch();
-    } else {
-      startStopwatch();
-    }
-  });
-
-  lapStopwatchBtn.addEventListener('click', addLap);
-  resetStopwatchBtn.addEventListener('click', resetStopwatch);
-
-  updateDisplay();
 }
