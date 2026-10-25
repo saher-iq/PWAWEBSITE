@@ -15,7 +15,7 @@
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "vq8gbda3hd");
-</script>
+  </script>
   <script src="https://t.contentsquare.net/uxa/b0bc6ce12137e.js"></script>
   <!-- Mixpanel -->
 <script type="text/javascript">
@@ -64,7 +64,7 @@ mixpanel.track("Page Loaded");
     document.getElementsByTagName("head")[0].appendChild(mf);
   })();
 </script>
-  
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Daily Task List</title>
@@ -80,6 +80,11 @@ mixpanel.track("Page Loaded");
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <nav class="app-nav" aria-label="Main navigation">
+    <a href="./index.html" class="nav-link active">Home</a>
+    <a href="./stopwatch.html" class="nav-link">Stopwatch</a>
+  </nav>
+
   <div class="todo-container">
     <h2>Daily Task List</h2>
 
@@ -91,13 +96,8 @@ mixpanel.track("Page Loaded");
     </div>
 
     <ul id="task-list" class="todo-list"></ul>
-
-    <div class="page-actions">
-      <a href="./stopwatch.html" class="page-link-button">Open Stopwatch</a>
-    </div>
   </div>
 
-  <!-- Install prompt popups -->
   <div id="a2hs-popup">
     <span>Add this app to your home screen</span>
     <button id="a2hs-accept">Install</button>
