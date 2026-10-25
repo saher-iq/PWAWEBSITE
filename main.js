@@ -29,6 +29,8 @@ function init() {
 
   if (addTaskBtn) addTaskBtn.addEventListener('click', onAddTask);
   if (enableNotifBtn) enableNotifBtn.addEventListener('click', requestNotificationPermission);
+
+  initStopwatch();
 }
 
 function requestNotificationPermission() {
@@ -165,13 +167,17 @@ function showReminder(task, label) {
   }
 }
 
-const stopwatchDisplay = document.getElementById('stopwatch-display');
-const startStopwatchBtn = document.getElementById('start-stopwatch');
-const lapStopwatchBtn = document.getElementById('lap-stopwatch');
-const resetStopwatchBtn = document.getElementById('reset-stopwatch');
-const lapListEl = document.getElementById('lap-list');
+function initStopwatch() {
+  const stopwatchDisplay = document.getElementById('stopwatch-display');
+  const startStopwatchBtn = document.getElementById('start-stopwatch');
+  const lapStopwatchBtn = document.getElementById('lap-stopwatch');
+  const resetStopwatchBtn = document.getElementById('reset-stopwatch');
+  const lapListEl = document.getElementById('lap-list');
 
-if (stopwatchDisplay && startStopwatchBtn && lapStopwatchBtn && resetStopwatchBtn && lapListEl) {
+  if (!stopwatchDisplay || !startStopwatchBtn || !lapStopwatchBtn || !resetStopwatchBtn || !lapListEl) {
+    return;
+  }
+
   let startTime = 0;
   let elapsed = 0;
   let intervalId = null;
