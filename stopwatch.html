@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stopwatch</title>
+  <meta name="theme-color" content="#101820" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <nav class="app-nav" aria-label="Main navigation">
+    <a href="./index.html" class="nav-link">Home</a>
+    <a href="./stopwatch.html" class="nav-link active">Stopwatch</a>
+  </nav>
+
+  <main class="stopwatch-container" aria-label="Stopwatch page">
+    <h1 class="stopwatch-header">Stopwatch</h1>
+
+    <div id="stopwatch-display" class="stopwatch-display" aria-live="polite">00:00.00</div>
+
+    <div class="stopwatch-controls">
+      <button id="start-stopwatch" type="button">Start</button>
+      <button id="lap-stopwatch" type="button" disabled>Lap</button>
+      <button id="reset-stopwatch" type="button">Reset</button>
+    </div>
+
+    <ul id="lap-list" class="lap-list" aria-live="polite"></ul>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>
