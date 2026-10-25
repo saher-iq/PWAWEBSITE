@@ -27,8 +27,13 @@ function init() {
       .catch(err => console.error('SW registration failed', err));
   }
 
-  if (addTaskBtn) addTaskBtn.addEventListener('click', onAddTask);
-  if (enableNotifBtn) enableNotifBtn.addEventListener('click', requestNotificationPermission);
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', onAddTask);
+  }
+
+  if (enableNotifBtn) {
+    enableNotifBtn.addEventListener('click', requestNotificationPermission);
+  }
 
   initStopwatch();
 }
