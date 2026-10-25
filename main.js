@@ -19,7 +19,10 @@ function init() {
   } catch {
     tasks = [];
   }
-  render();
+
+  if (listEl) {
+    render();
+  }
 
   // Register SW
   if ('serviceWorker' in navigator) {
@@ -28,8 +31,13 @@ function init() {
       .catch(err => console.error('SW registration failed', err));
   }
 
-  addTaskBtn.addEventListener('click', onAddTask);
-  enableNotifBtn.addEventListener('click', requestNotificationPermission);
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', onAddTask);
+  }
+
+  if (enableNotifBtn) {
+    enableNotifBtn.addEventListener('click', requestNotificationPermission);
+  }
 }
 
 function requestNotificationPermission() {
@@ -77,6 +85,8 @@ function persist() {
 }
 
 function render() {
+  if (!listEl) return;
+
   listEl.innerHTML = '';
   const now = Date.now();
 
@@ -126,7 +136,7 @@ function cancelReminders(id) {
 }
 
 // Schedule local reminders: 1 hour and 5 minutes before
-function scheduleReminders(task) {
+tfunction scheduleReminders(task) {
   cancelReminders(task.id); // clear if exists
 
   const reminders = [
@@ -161,4 +171,86 @@ function showReminder(task, label) {
     // Fallback: in-app alert
     alert(`${label}: ${task.text}`);
   }
+}
+
+const stopwatchDisplay = document.getElementById('stopwatch-display');
+const startStopwatchBtn = document.getElementById('start-stopwatch');
+const lapStopwatchBtn = document.getElementById('lap-stopwatch');
+const resetStopwatchBtn = document.getElementById('reset-stopwatch');
+const lapListEl = document.getElementById('lap-list');
+
+if (stopwatchDisplay && startStopwatchBtn && lapStopwatchBtn && resetStopwatchBtn && lapListEl) {
+  let startTime = 0;
+  let elapsed = 0;
+  let intervalId = null;
+  let lapCount = 0;
+
+  function formatTime(ms) {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const hundredths = Math.floor((ms % 1000) / 10);
+
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
+  }
+
+  function updateDisplay() {
+    stopwatchDisplay.textContent = formatTime(elapsed);
+  }
+
+  function startStopwatch() {
+    if (intervalId) return;
+
+    startTime = Date.now() - elapsed;
+    intervalId = setInterval(() => {
+      elapsed = Date.now() - startTime;
+      updateDisplay();
+    }, 10);
+
+    startStopwatchBtn.textContent = 'Stop';
+    lapStopwatchBtn.disabled = false;
+  }
+
+  function stopStopwatch() {
+    clearInterval(intervalId);
+    intervalId = null;
+    startStopwatchBtn.textContent = 'Start';
+    lapStopwatchBtn.disabled = true;
+  }
+
+  function resetStopwatch() {
+    stopStopwatch();
+    elapsed = 0;
+    lapCount = 0;
+    lapListEl.innerHTML = '';
+    updateDisplay();
+  }
+
+  function addLap() {
+    if (!intervalId) return;
+
+    lapCount += 1;
+    const li = document.createElement('li');
+
+    const label = document.createElement('span');
+    label.textContent = `Lap ${lapCount}`;
+
+    const value = document.createElement('span');
+    value.textContent = formatTime(elapsed);
+
+    li.appendChild(label);
+    li.appendChild(value);
+    lapListEl.prepend(li);
+  }
+
+  startStopwatchBtn.addEventListener('click', () => {
+    if (intervalId) {
+      stopStopwatch();
+    } else {
+      startStopwatch();
+    }
+  });
+
+  lapStopwatchBtn.addEventListener('click', addLap);
+  resetStopwatchBtn.addEventListener('click', resetStopwatch);
+  updateDisplay();
 }
