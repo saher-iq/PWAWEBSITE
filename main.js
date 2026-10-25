@@ -7,7 +7,6 @@ const listEl = document.getElementById('task-list');
 
 let tasks = [];
 let timers = new Map();
-
 const STORAGE_KEY = 'tasklist.tasks';
 
 init();
@@ -24,7 +23,7 @@ function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
       .then(() => console.log('Service Worker registered'))
-      .catch(err => console.error('SW registration failed', err));
+      .catch((err) => console.error('SW registration failed', err));
   }
 
   if (addTaskBtn) {
@@ -44,7 +43,7 @@ function requestNotificationPermission() {
     return;
   }
 
-  Notification.requestPermission().then(result => {
+  Notification.requestPermission().then((result) => {
     if (result === 'granted') {
       alert('Notifications enabled.');
     } else {
@@ -67,7 +66,7 @@ function onAddTask() {
   const id = crypto.randomUUID();
   const when = new Date(timeStr).getTime();
 
-  if (isNaN(when)) {
+  if (Number.isNaN(when)) {
     alert('Invalid time.');
     return;
   }
@@ -94,11 +93,12 @@ function render() {
 
   tasks
     .sort((a, b) => a.when - b.when)
-    .forEach(task => {
+    .forEach((task) => {
       const li = document.createElement('li');
 
       const info = document.createElement('div');
       info.className = 'task-info';
+
       const title = document.createElement('div');
       title.textContent = task.text;
 
@@ -125,7 +125,7 @@ function render() {
 }
 
 function deleteTask(id) {
-  tasks = tasks.filter(t => t.id !== id);
+  tasks = tasks.filter((task) => task.id !== id);
   cancelReminders(id);
   persist();
   render();
@@ -133,7 +133,7 @@ function deleteTask(id) {
 
 function cancelReminders(id) {
   const arr = timers.get(id) || [];
-  arr.forEach(timeoutId => clearTimeout(timeoutId));
+  arr.forEach((timeoutId) => clearTimeout(timeoutId));
   timers.delete(id);
 }
 
@@ -142,15 +142,15 @@ function scheduleReminders(task) {
 
   const reminders = [
     { when: task.when - 60 * 60 * 1000, label: 'Task in 1 hour' },
-    { when: task.when - 5 * 60 * 1000, label: 'Task in 5 minutes' },
+    { when: task.when - 5 * 60 * 1000, label: 'Task in 5 minutes' }
   ];
 
   const arr = [];
-
-  reminders.forEach(r => {
-    const delay = r.when - Date.now();
+  reminders.forEach((reminder) => {
+    const delay = reminder.when - Date.now();
     if (delay <= 0) return;
-    const timeoutId = setTimeout(() => showReminder(task, r.label), delay);
+
+    const timeoutId = setTimeout(() => showReminder(task, reminder.label), delay);
     arr.push(timeoutId);
   });
 
@@ -165,7 +165,7 @@ function showReminder(task, label) {
     navigator.serviceWorker.controller.postMessage({
       type: 'notify',
       title,
-      body,
+      body
     });
   } else {
     alert(`${label}: ${task.text}`);
@@ -192,7 +192,6 @@ function initStopwatch() {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     const hundredths = Math.floor((ms % 1000) / 10);
-
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(hundredths).padStart(2, '0')}`;
   }
 
