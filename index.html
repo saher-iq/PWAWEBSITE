@@ -81,11 +81,6 @@ mixpanel.track("Page Loaded");
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <nav class="app-nav" aria-label="Main navigation">
-    <a href="./index.html" class="nav-link active">Home</a>
-    <a href="./stopwatch.html" class="nav-link">Stopwatch</a>
-  </nav>
-
   <div class="todo-container">
     <h2>Daily Task List</h2>
 
@@ -97,6 +92,10 @@ mixpanel.track("Page Loaded");
     </div>
 
     <ul id="task-list" class="todo-list"></ul>
+
+    <div class="page-actions">
+      <a href="./stopwatch.html" class="page-link-button">Open Stopwatch</a>
+    </div>
   </div>
 
   <!-- Install prompt popups -->
