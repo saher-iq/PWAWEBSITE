@@ -6,38 +6,29 @@ const enableNotifBtn = document.getElementById('enable-notifications');
 const listEl = document.getElementById('task-list');
 
 let tasks = [];
-let timers = new Map(); // taskId -> [timeouts]
+let timers = new Map();
 
 const STORAGE_KEY = 'tasklist.tasks';
 
 init();
 
 function init() {
-  // Load tasks
   try {
     tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
   } catch {
     tasks = [];
   }
 
-  if (listEl) {
-    render();
-  }
+  if (listEl) render();
 
-  // Register SW
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
       .then(() => console.log('Service Worker registered'))
       .catch(err => console.error('SW registration failed', err));
   }
 
-  if (addTaskBtn) {
-    addTaskBtn.addEventListener('click', onAddTask);
-  }
-
-  if (enableNotifBtn) {
-    enableNotifBtn.addEventListener('click', requestNotificationPermission);
-  }
+  if (addTaskBtn) addTaskBtn.addEventListener('click', onAddTask);
+  if (enableNotifBtn) enableNotifBtn.addEventListener('click', requestNotificationPermission);
 }
 
 function requestNotificationPermission() {
@@ -45,6 +36,7 @@ function requestNotificationPermission() {
     alert('Notifications are not supported in this browser.');
     return;
   }
+
   Notification.requestPermission().then(result => {
     if (result === 'granted') {
       alert('Notifications enabled.');
@@ -55,6 +47,8 @@ function requestNotificationPermission() {
 }
 
 function onAddTask() {
+  if (!taskTextEl || !taskTimeEl) return;
+
   const text = taskTextEl.value.trim();
   const timeStr = taskTimeEl.value;
 
@@ -65,6 +59,7 @@ function onAddTask() {
 
   const id = crypto.randomUUID();
   const when = new Date(timeStr).getTime();
+
   if (isNaN(when)) {
     alert('Invalid time.');
     return;
@@ -135,9 +130,8 @@ function cancelReminders(id) {
   timers.delete(id);
 }
 
-// Schedule local reminders: 1 hour and 5 minutes before
-tfunction scheduleReminders(task) {
-  cancelReminders(task.id); // clear if exists
+function scheduleReminders(task) {
+  cancelReminders(task.id);
 
   const reminders = [
     { when: task.when - 60 * 60 * 1000, label: 'Task in 1 hour' },
@@ -160,7 +154,6 @@ function showReminder(task, label) {
   const title = `🔔 ${label}`;
   const body = task.text;
 
-  // If SW and permission granted, show a system notification
   if (Notification.permission === 'granted' && navigator.serviceWorker?.controller) {
     navigator.serviceWorker.controller.postMessage({
       type: 'notify',
@@ -168,7 +161,6 @@ function showReminder(task, label) {
       body,
     });
   } else {
-    // Fallback: in-app alert
     alert(`${label}: ${task.text}`);
   }
 }
@@ -252,5 +244,6 @@ if (stopwatchDisplay && startStopwatchBtn && lapStopwatchBtn && resetStopwatchBt
 
   lapStopwatchBtn.addEventListener('click', addLap);
   resetStopwatchBtn.addEventListener('click', resetStopwatch);
+
   updateDisplay();
 }
