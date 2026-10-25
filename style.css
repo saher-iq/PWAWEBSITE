@@ -1,3 +1,39 @@
+/* ---------- Navigation ---------- */
+.app-nav {
+  max-width: 500px;
+  margin: 20px auto 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 8px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.nav-link {
+  min-width: 100px;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: #1d3557;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(0, 120, 212, 0.08);
+  transform: translateY(-1px);
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, #0078d4, #4a90e2);
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(0, 120, 212, 0.2);
+}
+
 /* ---------- Container ---------- */
 .todo-container {
   max-width: 500px;
@@ -108,6 +144,107 @@
   transform: scale(1.1);
 }
 
+/* ---------- Stopwatch ---------- */
+.stopwatch-container {
+  max-width: 420px;
+  margin: 30px auto;
+  padding: 24px 20px 18px;
+  background: linear-gradient(180deg, #101820, #1f2c38 60%, #101820);
+  border-radius: 24px;
+  box-shadow: 0 18px 30px rgba(0,0,0,0.22);
+  color: #eef4ff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.stopwatch-header {
+  text-align: center;
+  margin-bottom: 22px;
+  letter-spacing: 0.04em;
+  color: #dfeafc;
+}
+
+.stopwatch-display {
+  margin: 0 auto 20px;
+  max-width: 300px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  text-align: center;
+  font-size: clamp(2.5rem, 7vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: #f3f8ff;
+}
+
+.stopwatch-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stopwatch-controls button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.stopwatch-controls button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.stopwatch-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#start-stopwatch {
+  background: #3ccf91;
+  color: #062d1d;
+}
+
+#lap-stopwatch {
+  background: #dfe8ff;
+  color: #1b2a3a;
+}
+
+#reset-stopwatch {
+  background: #ff6b6b;
+  color: white;
+}
+
+.lap-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.lap-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  color: #dfeafc;
+  font-variant-numeric: tabular-nums;
+}
+
+.lap-list li:first-child {
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.lap-list li span:last-child {
+  color: #f4f9ff;
+  font-weight: 600;
+}
+
 /* ---------- Install Popups ---------- */
 #a2hs-popup, #ios-popup {
   display: none;
@@ -136,13 +273,35 @@
 
 /* ---------- Mobile ---------- */
 @media (max-width: 600px) {
-  .todo-container {
+  .app-nav {
+    max-width: calc(100% - 24px);
+    margin-top: 14px;
+  }
+
+  .nav-link {
+    min-width: 90px;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+  }
+
+  .todo-container,
+  .stopwatch-container {
     margin: 15px;
     padding: 15px;
   }
+
   .todo-input input,
   .todo-input button {
     font-size: 14px;
     padding: 8px;
+  }
+
+  .stopwatch-controls {
+    gap: 8px;
+  }
+
+  .stopwatch-controls button {
+    padding: 10px 8px;
+    font-size: 0.8rem;
   }
 }
