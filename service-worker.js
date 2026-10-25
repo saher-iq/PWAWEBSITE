@@ -1,17 +1,17 @@
 // service-worker.js
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `tasklist-cache-${CACHE_VERSION}`;
 
-// Adjust base path for GitHub Pages repo: '/username/repo-name'
-// If serving at root (username.github.io), set BASE = '/'
-const BASE = self.registration.scope.endsWith('/') ? self.registration.scope : '/';
+const BASE = self.registration.scope;
 
 const URLS_TO_CACHE = [
   `${BASE}`,
   `${BASE}index.html`,
+  `${BASE}stopwatch.html`,
   `${BASE}manifest.json`,
   `${BASE}style.css`,
   `${BASE}main.js`,
+  `${BASE}stopwatch.js`,
   `${BASE}install-prompt.js`,
   `${BASE}icons/icon-192.png`,
   `${BASE}icons/icon-512.png`,
@@ -35,19 +35,24 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Network-first for navigation; cache-first for assets
+// Network-first for same-origin files (so updates always show), cache as fallback offline
 self.addEventListener('fetch', event => {
   const req = event.request;
+  if (req.method !== 'GET') return;
 
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).catch(() => caches.match(`${BASE}index.html`))
-    );
-    return;
-  }
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(req).then(res => res || fetch(req))
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+        return res;
+      })
+      .catch(() =>
+        caches.match(req).then(cached => cached || caches.match(`${BASE}index.html`))
+      )
   );
 });
 
@@ -67,10 +72,7 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      for (let client of windowClients) {
-        // Focus first matching client
-        return client.focus();
-      }
+      if (windowClients.length > 0) return windowClients[0].focus();
       return clients.openWindow(`${BASE}index.html`);
     })
   );
